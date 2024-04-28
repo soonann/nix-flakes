@@ -1,37 +1,68 @@
 /*
-  Blink
+  Scan
 
-  Turns an LED on for one second, then off for one second, repeatedly.
+  This example scans for Bluetooth® Low Energy peripherals and prints out their advertising details:
+  address, local name, advertised service UUID's.
 
-  Most Arduinos have an on-board LED you can control. On the UNO, MEGA and ZERO
-  it is attached to digital pin 13, on MKR1000 on pin 6. LED_BUILTIN is set to
-  the correct LED pin independent of which board is used.
-  If you want to know what pin the on-board LED is connected to on your Arduino
-  model, check the Technical Specs of your board at:
-  https://www.arduino.cc/en/Main/Products
-
-  modified 8 May 2014
-  by Scott Fitzgerald
-  modified 2 Sep 2016
-  by Arturo Guadalupi
-  modified 8 Sep 2016
-  by Colby Newman
+  The circuit:
+  - Arduino MKR WiFi 1010, Arduino Uno WiFi Rev2 board, Arduino Nano 33 IoT,
+    Arduino Nano 33 BLE, or Arduino Nano 33 BLE Sense board.
 
   This example code is in the public domain.
-
-  https://www.arduino.cc/en/Tutorial/BuiltInExamples/Blink
 */
 
-// the setup function runs once when you press reset or power the board
+#include <ArduinoBLE.h>
+
 void setup() {
-  // initialize digital pin LED_BUILTIN as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
+  Serial.begin(9600);
+  while (!Serial);
+
+  // begin initialization
+  if (!BLE.begin()) {
+    Serial.println("starting Bluetooth® Low Energy module failed!");
+
+    while (1);
+  }
+
+  Serial.println("Bluetooth® Low Energy Central scan");
+
+  // start scanning for peripheral
+  BLE.scan();
 }
 
-// the loop function runs over and over again forever
 void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  delay(1000);                      // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
-  delay(1000);                      // wait for a second
+  // check if a peripheral has been discovered
+  BLEDevice peripheral = BLE.available();
+
+  if (peripheral) {
+    // discovered a peripheral
+    Serial.println("Discovered a peripheral");
+    Serial.println("-----------------------");
+
+    // print address
+    Serial.print("Address: ");
+    Serial.println(peripheral.address());
+
+    // print the local name, if present
+    if (peripheral.hasLocalName()) {
+      Serial.print("Local Name: ");
+      Serial.println(peripheral.localName());
+    }
+
+    // print the advertised service UUIDs, if present
+    if (peripheral.hasAdvertisedServiceUuid()) {
+      Serial.print("Service UUIDs: ");
+      for (int i = 0; i < peripheral.advertisedServiceUuidCount(); i++) {
+        Serial.print(peripheral.advertisedServiceUuid(i));
+        Serial.print(" ");
+      }
+      Serial.println();
+    }
+
+    // print the RSSI
+    Serial.print("RSSI: ");
+    Serial.println(peripheral.rssi());
+
+    Serial.println();
+  }
 }
